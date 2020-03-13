@@ -137,16 +137,23 @@ func (vs *VolumeServer) GetOrHeadHandler(w http.ResponseWriter, r *http.Request)
 		}
 	}
 	if ext == ".png" || ext == ".jpg" || ext == ".gif" {
-		width, height := 0, 0
+		x, y, width, height := -1, -1, 0, 0
+		if r.FormValue("x") != "" && r.FormValue("y") != "" {
+			x, _ = strconv.Atoi(r.FormValue("x"))
+			y, _ = strconv.Atoi(r.FormValue("y"))
+		}
 		if r.FormValue("width") != "" {
 			width, _ = strconv.Atoi(r.FormValue("width"))
 		}
 		if r.FormValue("height") != "" {
 			height, _ = strconv.Atoi(r.FormValue("height"))
 		}
-		n.Data, _, _ = images.Resized(ext, n.Data, width, height)
+		if x > -1 && y > -1 {
+			n.Data, _, _ = images.Crop(ext, n.Data, x, y, width, height)
+		} else {
+			n.Data, _, _ = images.Resized(ext, n.Data, width, height)
+		}
 	}
-
 	if e := writeResponseContent(filename, mtype, bytes.NewReader(n.Data), w, r); e != nil {
 		glog.V(2).Infoln("response write error:", e)
 	}
